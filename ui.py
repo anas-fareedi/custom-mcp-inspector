@@ -1,6 +1,9 @@
 import streamlit as st
 import json
 from client import MCPHttpClient
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
 st.title("🛠 MCP Inspector (Python Edition)")
 
@@ -9,7 +12,7 @@ st.sidebar.header("Server Configuration")
 
 # Remote FastMCP Cloud
 default_url = "https://my-mcp-server1.fastmcp.app"
-default_token = "fmcp_1Y3-1vXrqluqNcceFNkF1OSgStI0uAuy4nfEWrj_QCs"
+default_token = os.getenv("MCP_TOKEN")
 
 server_url = st.sidebar.text_input("Server URL", default_url)
 bearer_token = st.sidebar.text_input("Bearer Token", default_token, type="password")
