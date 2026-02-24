@@ -1,19 +1,36 @@
 import streamlit as st
-import requests
 import json
+from client import MCPHttpClient
 
 st.title("🛠 MCP Inspector (Python Edition)")
 
+# Sidebar for server configuration
+st.sidebar.header("Server Configuration")
+
+# Remote FastMCP Cloud
+default_url = "https://my-mcp-server1.fastmcp.app"
+default_token = "fmcp_1Y3-1vXrqluqNcceFNkF1OSgStI0uAuy4nfEWrj_QCs"
+
+server_url = st.sidebar.text_input("Server URL", default_url)
+bearer_token = st.sidebar.text_input("Bearer Token", default_token, type="password")
+
+if not bearer_token:
+    st.warning("Please enter your Bearer token in the sidebar")
+    st.stop()
+
+# Create client (no caching to avoid stale connections)
 try:
-    tools = requests.get("http://localhost:8000/tools").json()
+    client = MCPHttpClient(server_url, bearer_token)
+    tools = client.list_tools()
 except Exception as e:
-    st.error(f"Failed to connect to backend: {e}")
-    st.info("Make sure the backend is running: `uvicorn inspector:app --reload`")
+    st.error(f"Failed to connect to server: {e}")
     st.stop()
 
 if not tools:
     st.warning("No tools available from the server")
     st.stop()
+
+st.success(f"Connected! Found {len(tools)} tools")
 
 tool_names = [tool["name"] for tool in tools]
 
@@ -39,17 +56,12 @@ if st.button("Run Tool"):
         parsed_args = json.loads(arguments)
     except json.JSONDecodeError as e:
         st.error(f"Invalid JSON: {e}")
-        st.info("Use double quotes for keys and strings, e.g., `{\"a\": 5, \"b\": 3}`")
+        st.info('Use double quotes for keys and strings, e.g., `{"a": 5, "b": 3}`')
         st.stop()
+    
     try:
-        response = requests.post(
-            "http://localhost:8000/call",
-            json={
-                "name": selected_tool,
-                "arguments": parsed_args
-            }
-        ).json()
+        with st.spinner("Calling tool..."):
+            response = client.call_tool(selected_tool, parsed_args)
         st.json(response)
     except Exception as e:
         st.error(f"Error calling tool: {e}")
-        

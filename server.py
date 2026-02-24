@@ -13,4 +13,5 @@ def subtract(a: int, b: int) -> int:
     return a - b
 
 if __name__ == "__main__":
-    app.run()
+    app.run(transport="http", host="0.0.0.0", port=8000, path="/")
+    # app.http_app(path="/api/mcp/")
